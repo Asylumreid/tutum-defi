@@ -2,11 +2,16 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract TutumLending is ReentrancyGuard, Ownable {
+contract TutumLending is ReentrancyGuard, AccessControl {
     IERC20 public usdt;
+    
+    // Roles
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant LOAN_MANAGER_ROLE = keccak256("LOAN_MANAGER_ROLE");
+    bytes32 public constant FEE_COLLECTOR_ROLE = keccak256("FEE_COLLECTOR_ROLE");
     
     uint256 public constant PLATFORM_FEE = 500; // 5% = 500 basis points
     uint256 public constant BASIS_POINTS = 10000;
@@ -30,8 +35,10 @@ contract TutumLending is ReentrancyGuard, Ownable {
     struct LenderInfo {
         uint256 depositAmount;
         uint256 depositTime;
+        uint256 lockEndTime;
         uint256 lastRewardCalculationTime;
         uint256 accumulatedRewards;
+        bool isLocked;
     }
 
     // Mappings
@@ -51,11 +58,19 @@ contract TutumLending is ReentrancyGuard, Ownable {
     event LoanRepaid(uint256 indexed loanId, address indexed borrower, uint256 amount);
     event LoanCancelled(uint256 indexed loanId, address indexed borrower);
     event RewardsClaimed(address indexed lender, uint256 amount);
-    event FeesWithdrawn(address indexed owner, uint256 amount);
+    event FeesWithdrawn(address indexed collector, uint256 amount);
 
     constructor(address _usdt) {
+        require(_usdt != address(0), "Invalid USDT address");
         usdt = IERC20(_usdt);
+        
+        // Setup admin roles
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(LOAN_MANAGER_ROLE, msg.sender);
+        _grantRole(FEE_COLLECTOR_ROLE, msg.sender);
     }
+    
 
     // Lender functions
     function deposit(uint256 _amount) external nonReentrant {
@@ -77,6 +92,8 @@ contract TutumLending is ReentrancyGuard, Ownable {
             lender.depositTime = block.timestamp;
         }
         lender.lastRewardCalculationTime = block.timestamp;
+        lender.lockEndTime = block.timestamp + 90 days; // 3 months lock period
+        lender.isLocked = true;
         
         totalDeposits += _amount;
         
@@ -86,6 +103,7 @@ contract TutumLending is ReentrancyGuard, Ownable {
     function withdraw(uint256 _amount) external nonReentrant {
         LenderInfo storage lender = lenders[msg.sender];
         require(_amount <= lender.depositAmount, "Insufficient balance");
+        require(block.timestamp >= lender.lockEndTime, "Funds are still locked");
         require(totalDeposits - totalLoans >= _amount, "Insufficient liquidity");
         
         // Calculate and update rewards before withdrawal
@@ -99,6 +117,7 @@ contract TutumLending is ReentrancyGuard, Ownable {
         lender.accumulatedRewards = 0;
         if (lender.depositAmount == 0) {
             lender.depositTime = 0;
+            lender.isLocked = false;
         }
         lender.lastRewardCalculationTime = block.timestamp;
         
@@ -108,6 +127,20 @@ contract TutumLending is ReentrancyGuard, Ownable {
         require(usdt.transfer(msg.sender, totalWithdraw), "Transfer failed");
         
         emit Withdrawn(msg.sender, _amount, rewards);
+    }
+
+    // View function to get lock status
+    function getLockStatus(address _lender) external view returns (
+        bool isLocked,
+        uint256 lockEndTime,
+        uint256 timeRemaining
+    ) {
+        LenderInfo memory lender = lenders[_lender];
+        return (
+            lender.isLocked,
+            lender.lockEndTime,
+            lender.lockEndTime > block.timestamp ? lender.lockEndTime - block.timestamp : 0
+        );
     }
 
     // Calculate and update rewards for a lender
@@ -124,42 +157,49 @@ contract TutumLending is ReentrancyGuard, Ownable {
 
     // Admin functions for loan management
     function createLoan(
-        address _borrower,
-        uint256 _amount,
-        uint256 _duration
-    ) external onlyOwner nonReentrant returns (uint256) {
-        require(_borrower != address(0), "Invalid borrower address");
-        require(_amount >= MIN_LOAN_AMOUNT && _amount <= MAX_LOAN_AMOUNT, "Invalid loan amount");
-        require(_duration <= MAX_LOAN_DURATION, "Duration exceeds maximum");
-        require(totalDeposits - totalLoans >= _amount, "Insufficient liquidity");
-        
-        uint256 monthlyInterestRate = (ANNUAL_INTEREST_RATE * _duration) / (365 days * BASIS_POINTS);
-        uint256 interest = (_amount * monthlyInterestRate) / BASIS_POINTS;
-        
-        // Create loan
-        uint256 loanId = loanIdCounter++;
-        loans[loanId] = Loan({
-            borrower: _borrower,
-            amount: _amount,
-            interest: interest,
-            startTime: block.timestamp,
-            duration: _duration,
-            isActive: true,
-            isRepaid: false,
-            isCancelled: false
-        });
-        
-        borrowerLoans[_borrower].push(loanId);
-        totalLoans += _amount;
-        
-        // Transfer USDT to borrower
-        require(usdt.transfer(_borrower, _amount), "Transfer failed");
-        
-        emit LoanCreated(loanId, _borrower, _amount, _duration);
-        return loanId;
-    }
+            address _borrower,
+            uint256 _amount,
+            uint256 _duration
+        ) external onlyRole(LOAN_MANAGER_ROLE) nonReentrant returns (uint256) {
+            require(_borrower != address(0), "Invalid borrower address");
+            require(_amount >= MIN_LOAN_AMOUNT && _amount <= MAX_LOAN_AMOUNT, "Invalid loan amount");
+            require(_duration <= MAX_LOAN_DURATION, "Duration exceeds maximum");
+            require(totalDeposits - totalLoans >= _amount, "Insufficient liquidity");
+            
+            // Calculate interest
+            // For precision: multiply everything first, then divide
+            // (_amount * ANNUAL_INTEREST_RATE * _duration) / (YEAR_IN_SECONDS * BASIS_POINTS)
+            uint256 numerator = _amount * ANNUAL_INTEREST_RATE * _duration;
+            uint256 denominator = 365 days * BASIS_POINTS;
+            uint256 interest = numerator / denominator;
+            
+            // Verify interest is non-zero
+            require(interest > 0, "Interest calculation error");
+            
+            // Create loan
+            uint256 loanId = loanIdCounter++;
+            loans[loanId] = Loan({
+                borrower: _borrower,
+                amount: _amount,
+                interest: interest,
+                startTime: block.timestamp,
+                duration: _duration,
+                isActive: true,
+                isRepaid: false,
+                isCancelled: false
+            });
+            
+            borrowerLoans[_borrower].push(loanId);
+            totalLoans += _amount;
+            
+            // Transfer USDT to borrower
+            require(usdt.transfer(_borrower, _amount), "Transfer failed");
+            
+            emit LoanCreated(loanId, _borrower, _amount, _duration);
+            return loanId;
+        }
 
-    function cancelLoan(uint256 _loanId) external onlyOwner nonReentrant {
+    function cancelLoan(uint256 _loanId) external onlyRole(LOAN_MANAGER_ROLE) nonReentrant {
         Loan storage loan = loans[_loanId];
         require(loan.isActive, "Loan is not active");
         require(!loan.isRepaid, "Loan is already repaid");
@@ -196,14 +236,20 @@ contract TutumLending is ReentrancyGuard, Ownable {
         emit LoanRepaid(_loanId, msg.sender, totalRepayment);
     }
 
-    function withdrawFees() external onlyOwner {
+    function withdrawFees() external onlyRole(FEE_COLLECTOR_ROLE) nonReentrant {
         uint256 fees = accumulatedFees;
         require(fees > 0, "No fees to withdraw");
         
         accumulatedFees = 0;
-        require(usdt.transfer(owner(), fees), "Transfer failed");
+        require(usdt.transfer(msg.sender, fees), "Transfer failed");
         
-        emit FeesWithdrawn(owner(), fees);
+        emit FeesWithdrawn(msg.sender, fees);
+    }
+
+    // Protocol management functions
+    function setUSDT(address _newUSDT) external onlyRole(ADMIN_ROLE) {
+        require(_newUSDT != address(0), "Invalid USDT address");
+        usdt = IERC20(_newUSDT);
     }
 
     // View functions
