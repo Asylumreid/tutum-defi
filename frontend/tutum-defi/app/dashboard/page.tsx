@@ -2,13 +2,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
-// Extend the Window interface to include ethereum
-declare global {
-  interface Window {
-    ethereum: any
-  }
-}
 import { ethers } from 'ethers'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
