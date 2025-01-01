@@ -2,7 +2,7 @@
 'use client'
 
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi'
-import { bscTestnet } from 'viem/chains'
+import { bscTestnet, Chain } from 'viem/chains'
 import { WagmiConfig } from 'wagmi'
 import { useEffect, useState } from 'react'
 
@@ -15,7 +15,7 @@ const metadata = {
   icons: ['https://tutum.finance/icon.png']
 }
 
-const chains = [bscTestnet]
+const chains: readonly [Chain, ...Chain[]] = [bscTestnet]
 const wagmiConfig = defaultWagmiConfig({
   chains,
   projectId,
@@ -25,7 +25,7 @@ const wagmiConfig = defaultWagmiConfig({
   enableEIP6963: true,
 })
 
-createWeb3Modal({ wagmiConfig, projectId, chains })
+createWeb3Modal({ wagmiConfig, projectId })
 
 export default function WalletProvider({
   children,
