@@ -4,9 +4,30 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "forge-std/console.sol";
 
 contract TutumLending is ReentrancyGuard, AccessControl {
     IERC20 public usdt;
+
+    event DepositAttempted(
+        address indexed sender,
+        uint256 amount,
+        uint256 senderBalance,
+        uint256 senderAllowance
+    );
+
+    event DepositResult(
+        address indexed sender,
+        bool success,
+        uint256 contractBalance
+    );
+
+    event TransferFromAttempt(
+        address indexed from,
+        address indexed to,
+        uint256 amount,
+        bool success
+    );
     
     // Roles
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -64,25 +85,52 @@ contract TutumLending is ReentrancyGuard, AccessControl {
         require(_usdt != address(0), "Invalid USDT address");
         usdt = IERC20(_usdt);
         
-        // Setup admin roles
+        console.log("Deploying contract with USDT:", _usdt);
+        
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(LOAN_MANAGER_ROLE, msg.sender);
         _grantRole(FEE_COLLECTOR_ROLE, msg.sender);
     }
-    
 
-    // Lender functions
     function deposit(uint256 _amount) external nonReentrant {
+        console.log("Deposit called by", msg.sender);
+        console.log("Amount:", _amount);
+        
         require(_amount > 0, "Amount must be greater than 0");
         
-        // Transfer USDT from lender
-        require(usdt.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        // Get pre-transfer state
+        uint256 senderBalance = usdt.balanceOf(msg.sender);
+        uint256 senderAllowance = usdt.allowance(msg.sender, address(this));
+        
+        console.log("Sender balance:", senderBalance);
+        console.log("Sender allowance:", senderAllowance);
+        
+        emit DepositAttempted(msg.sender, _amount, senderBalance, senderAllowance);
+        
+        // Verify balance and allowance
+        require(senderBalance >= _amount, "Insufficient USDT balance");
+        require(senderAllowance >= _amount, "Insufficient USDT allowance");
+        
+        // Record contract balance before transfer
+        uint256 contractBalanceBefore = usdt.balanceOf(address(this));
+        console.log("Contract balance before:", contractBalanceBefore);
+        
+        // Attempt transfer
+        bool success = usdt.transferFrom(msg.sender, address(this), _amount);
+        emit TransferFromAttempt(msg.sender, address(this), _amount, success);
+        
+        require(success, "Transfer failed");
+        
+        // Verify the transfer actually moved tokens
+        uint256 contractBalanceAfter = usdt.balanceOf(address(this));
+        require(contractBalanceAfter == contractBalanceBefore + _amount, "Transfer amount mismatch");
+        
+        console.log("Contract balance after:", contractBalanceAfter);
         
         // Update lender info
         LenderInfo storage lender = lenders[msg.sender];
         
-        // If this is not their first deposit, calculate and update rewards first
         if (lender.depositAmount > 0) {
             updateRewards(msg.sender);
         }
@@ -92,14 +140,16 @@ contract TutumLending is ReentrancyGuard, AccessControl {
             lender.depositTime = block.timestamp;
         }
         lender.lastRewardCalculationTime = block.timestamp;
-        lender.lockEndTime = block.timestamp + 90 days; // 3 months lock period
+        lender.lockEndTime = block.timestamp + 90 days;
         lender.isLocked = true;
         
         totalDeposits += _amount;
         
+        emit DepositResult(msg.sender, true, contractBalanceAfter);
         emit Deposited(msg.sender, _amount);
     }
 
+    
     function withdraw(uint256 _amount) external nonReentrant {
         LenderInfo storage lender = lenders[msg.sender];
         require(_amount <= lender.depositAmount, "Insufficient balance");
