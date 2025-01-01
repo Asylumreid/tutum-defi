@@ -8,7 +8,6 @@ import LendingDashboard from '@/components/LendingDashboard'
 import { motion } from 'framer-motion'
 import { useAccount } from 'wagmi'
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/config/contracts'
-import { Web3Button } from '@web3modal/react'
 
 export default function DashboardPage() {
   const [contract, setContract] = useState<ethers.Contract | null>(null)
