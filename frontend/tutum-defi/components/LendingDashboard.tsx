@@ -20,12 +20,11 @@ const USDT_ABI = [
   "function transfer(address to, uint256 amount) external returns (bool)",
   "function decimals() external view returns (uint8)"
 ]
-
 const PARTICIPATED_LOANS = [
-  { company: "TechCorp Solutions", amount: "5,000", status: "Active" },
-  { company: "Green Energy Ltd", amount: "3,500", status: "Active" },
-  { company: "Global Trade Inc", amount: "7,200", status: "Active" },
-  { company: "Healthcare Plus", amount: "4,800", status: "Active" },
+  { company: "TechCorp Solutions", amount: "5,000", status: "Active", timeRemaining: 836400 }, // 1 day
+  { company: "Green Energy Ltd", amount: "3,500", status: "Active", timeRemaining: 2392200 }, // 30 days
+  { company: "Global Trade Inc", amount: "7,200", status: "Active", timeRemaining: 5284040 }, // 60 days
+  { company: "Healthcare Plus", amount: "4,800", status: "Active", timeRemaining: 7489670 }, // 89 days
 ]
 
 const APY_RATE = 19 // 19% APY
@@ -206,10 +205,7 @@ const LendingDashboard = ({ contract, address }: LendingDashboardProps) => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            <span>{error}</span>
-          </div>
+          <div className="flex items-center gap-2"></div>
         </motion.div>
       )}
 
@@ -362,20 +358,21 @@ const LendingDashboard = ({ contract, address }: LendingDashboardProps) => {
           <div className="space-y-4">
             {PARTICIPATED_LOANS.map((loan, index) => (
               <div 
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-800 rounded-lg"
+          key={index}
+          className="flex items-center justify-between p-4 bg-gray-800 rounded-lg"
               >
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="font-medium text-white">{loan.company}</p>
-                    <p className="text-sm text-gray-400">Status: {loan.status}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <BadgeDollarSign className="h-5 w-5 text-gray-400" />
-                  <span className="font-medium text-white">{loan.amount} USDT</span>
-                </div>
+          <div className="flex items-center gap-3">
+            <Building2 className="h-5 w-5 text-gray-400" />
+            <div>
+              <p className="font-medium text-white">{loan.company}</p>
+              <p className="text-sm text-gray-400">Status: {loan.status}</p>
+              <p className="text-sm text-yellow-500 font-bold">Time remaining: {formatTimeRemaining(loan.timeRemaining)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <BadgeDollarSign className="h-5 w-5 text-gray-400" />
+            <span className="font-medium text-white">{loan.amount} USDT</span>
+          </div>
               </div>
             ))}
           </div>
