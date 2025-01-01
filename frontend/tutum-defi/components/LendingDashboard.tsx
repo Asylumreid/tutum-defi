@@ -9,6 +9,12 @@ import { motion } from 'framer-motion'
 import { AlertCircle, Info, Lock, Timer, Building2, BadgeDollarSign } from 'lucide-react'
 import { ethers } from 'ethers'
 
+declare global {
+  interface Window {
+    ethereum: ethers.providers.ExternalProvider;
+  }
+}
+
 // Constants
 const USDT_ADDRESS = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
 
@@ -163,7 +169,11 @@ const LendingDashboard = ({ contract, address }: LendingDashboardProps) => {
       setError('Deposit successful!')
     } catch (err) {
       console.error('Error depositing:', err)
-      setError(`Failed to deposit: ${err.message}`)
+      if (err instanceof Error) {
+        setError(`Failed to deposit: ${err.message}`)
+      } else {
+        setError('Failed to deposit: An unknown error occurred')
+      }
     } finally {
       setLoading(false)
     }
@@ -186,7 +196,11 @@ const LendingDashboard = ({ contract, address }: LendingDashboardProps) => {
       setError('Withdrawal successful!')
     } catch (err) {
       console.error('Error withdrawing:', err)
-      setError(`Failed to withdraw: ${err.message}`)
+      if (err instanceof Error) {
+        setError(`Failed to withdraw: ${err.message}`)
+      } else {
+        setError('Failed to withdraw: An unknown error occurred')
+      }
     } finally {
       setLoading(false)
     }
