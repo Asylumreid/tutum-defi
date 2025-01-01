@@ -4,11 +4,24 @@ import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 
 const steps = [
-  { title: 'Connect Wallet', description: 'Link your Web3 wallet to get started' },
-  { title: 'Deposit Assets', description: 'Transfer your crypto assets to the platform' },
-  { title: 'Choose Lending Options', description: 'Select from various lending opportunities' },
-  { title: 'Earn Interest', description: 'Watch your assets grow over time' },
+  { 
+    title: 'Connect Wallet', 
+    description: 'Connect your Web3 wallet to start participating in SME lending'
+  },
+  { 
+    title: 'Deposit USDT', 
+    description: 'Invest between 3,000 to 10,000 USDT in the lending pool' 
+  },
+  { 
+    title: '90-Day Lock Period', 
+    description: 'Funds are locked for 90 days while being used for SME loans' 
+  },
+  { 
+    title: 'Earn 19% APY', 
+    description: 'Earn stable returns through tokenized SME loan interest' 
+  },
 ]
+
 
 const HowItWorks = () => {
   return (

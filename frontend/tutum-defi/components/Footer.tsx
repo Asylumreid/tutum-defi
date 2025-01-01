@@ -32,15 +32,11 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400">&copy; 2023 Tutum. All rights reserved.</p>
+          <p className="text-gray-400">&copy; 2024 Tutum. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-gray-400 hover:text-white">
               <span className="sr-only">Twitter</span>
               <Twitter className="h-6 w-6" />
-            </a>
-            <a href="#" className="text-gray-400 hover:text-white">
-              <span className="sr-only">GitHub</span>
-              <GitHub className="h-6 w-6" />
             </a>
             <a href="#" className="text-gray-400 hover:text-white">
               <span className="sr-only">Discord</span>

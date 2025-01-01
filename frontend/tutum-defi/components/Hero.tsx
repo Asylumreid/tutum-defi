@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useAnimation } from 'framer-motion'
+import { Building2, LineChart } from 'lucide-react'
 
 const Hero = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [apyRate, setApyRate] = useState(0)
-  const [tvl, setTvl] = useState(0)
   const controls = useAnimation()
 
   useEffect(() => {
@@ -16,10 +15,7 @@ const Hero = () => {
     }
 
     window.addEventListener('mousemove', handleMouseMove)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-    }
+    return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
   useEffect(() => {
@@ -28,25 +24,6 @@ const Hero = () => {
       y: 0,
       transition: { duration: 0.8 }
     })
-
-    const apyInterval = setInterval(() => {
-      setApyRate(prev => {
-        const next = prev + 0.5
-        return next > 19 ? 19 : next
-      })
-    }, 50)
-
-    const tvlInterval = setInterval(() => {
-      setTvl(prev => {
-        const next = prev + 1000000
-        return next > 100000000 ? 100000000 : next
-      })
-    }, 30)
-
-    return () => {
-      clearInterval(apyInterval)
-      clearInterval(tvlInterval)
-    }
   }, [controls])
 
   return (
@@ -79,7 +56,7 @@ const Hero = () => {
           animate={controls}
           transition={{ delay: 0.2 }}
         >
-          Tutum is a pioneering Web 2.5 company bridging the divide between blockchain technology and traditional finance
+          Bridging Web3 and Real-World SME Lending
         </motion.p>
         <motion.div
           className="flex flex-col sm:flex-row justify-center items-center space-y-6 sm:space-y-0 sm:space-x-12 mb-10"
@@ -87,27 +64,31 @@ const Hero = () => {
           animate={controls}
           transition={{ delay: 0.4 }}
         >
-          <div className="text-center">
-            <p className="text-4xl sm:text-5xl md:text-6xl font-bold text-indigo-400 mb-1">
-              {apyRate.toFixed(1)}%
-            </p>
-            <p className="text-lg md:text-xl text-gray-400">APY Rate</p>
+          <div className="text-center p-6 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-center mb-2">
+              <Building2 className="w-6 h-6 text-indigo-400 mr-2" />
+              <p className="text-4xl font-bold text-indigo-400">$60B</p>
+            </div>
+            <p className="text-sm text-gray-400">Total Addressable Market</p>
           </div>
-          <div className="text-center">
-            <p className="text-4xl sm:text-5xl md:text-6xl font-bold text-indigo-400 mb-1">
-              ${(tvl / 1000000).toFixed(1)}M
-            </p>
-            <p className="text-lg md:text-xl text-gray-400">Total Value Locked</p>
+          <div className="text-center p-6 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-center mb-2">
+              <LineChart className="w-6 h-6 text-indigo-400 mr-2" />
+              <p className="text-4xl font-bold text-indigo-400">33%</p>
+            </div>
+            <p className="text-sm text-gray-400">Annual Interest Rate</p>
           </div>
         </motion.div>
         <motion.div
+          className="space-y-4"
           initial={{ opacity: 0, y: 20 }}
           animate={controls}
           transition={{ delay: 0.6 }}
         >
-          <Link href="#get-started" className="btn-primary text-lg">
+          <Link href="/dashboard" className="btn-primary text-lg block w-full sm:w-auto sm:inline-block">
             Start Earning Today
           </Link>
+          <p className="text-gray-400 text-sm">3-Month Lock Period • 19% APY for Lenders</p>
         </motion.div>
       </div>
     </section>
@@ -115,4 +96,3 @@ const Hero = () => {
 }
 
 export default Hero
-

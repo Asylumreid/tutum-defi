@@ -1,25 +1,33 @@
 'use client'
 
-import { Percent, Shield, Eye } from 'lucide-react'
+import { 
+  Building2, 
+  LineChart, 
+  Clock, 
+  ShieldCheck, 
+  FileBarChart, 
+  LinkIcon 
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const features = [
   {
-    title: 'High Yields',
-    description: 'Earn competitive APY on your assets',
-    icon: Percent,
+    title: 'Traditional Finance Integration',
+    description: 'Bridge between blockchain technology and SME lending',
+    icon: Building2,
   },
   {
-    title: 'Secure Platform',
-    description: 'Your assets are protected by industry-leading security measures',
-    icon: Shield,
+    title: 'High Margin Returns',
+    description: '33% annual returns through pro-rated interest',
+    icon: LineChart,
   },
   {
-    title: 'Transparent Lending',
-    description: 'Clear and open lending processes for all users',
-    icon: Eye,
+    title: 'Quick Repayment Cycles',
+    description: 'Loan tenure capped at 3 months for faster returns',
+    icon: Clock,
   },
 ]
+
 
 const KeyFeatures = () => {
   return (

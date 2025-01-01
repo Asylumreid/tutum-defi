@@ -1,23 +1,28 @@
 'use client'
 
-import { Shield, Lock, Eye } from 'lucide-react'
+import {  
+  ShieldCheck, 
+  FileBarChart, 
+  LinkIcon 
+} from 'lucide-react'
+
 import { motion } from 'framer-motion'
 
 const securityFeatures = [
   {
-    title: 'Audited Smart Contracts',
-    description: 'Our smart contracts are regularly audited by top security firms',
-    icon: Shield,
+    title: 'Regulated Operation',
+    description: 'Licensed and regulated under MAS (Monetary Authority of Singapore)',
+    icon: ShieldCheck,
   },
   {
-    title: 'Multi-Sig Wallets',
-    description: 'We use multi-signature wallets for enhanced fund security',
-    icon: Lock,
+    title: 'Risk Assessment',
+    description: 'Thorough SME loan evaluation and risk management process',
+    icon: FileBarChart,
   },
   {
-    title: 'Transparent Operations',
-    description: 'All platform activities are visible on the blockchain for full transparency',
-    icon: Eye,
+    title: 'On-Chain Transparency',
+    description: 'All loan tokenization visible and verifiable on blockchain',
+    icon: LinkIcon,
   },
 ]
 

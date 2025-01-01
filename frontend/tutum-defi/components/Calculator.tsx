@@ -11,7 +11,7 @@ const Calculator = () => {
     const numValue = parseFloat(value)
     if (!isNaN(numValue)) {
       // This is a simplified calculation. Replace with your actual calculation logic.
-      const returns = numValue * 0.05 // Assuming 5% APY
+      const returns = numValue * 0.19 // Assuming 19% APY
       setEstimatedReturns(returns)
     } else {
       setEstimatedReturns(0)
