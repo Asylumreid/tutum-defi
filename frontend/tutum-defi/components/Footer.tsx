@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Twitter, GitlabIcon as GitHub, DiscIcon as Discord } from 'lucide-react'
+import { Twitter, DiscIcon as Discord } from 'lucide-react'
 
 const Footer = () => {
   return (
