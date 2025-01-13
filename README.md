@@ -25,7 +25,7 @@ Start earning today with Tutum Financial's innovative lending platform. We offer
 
 Your assets are protected by industry-leading security measures:
 
-*   **Regulated Operation:** Tutum Financial is licensed and regulated under MAS (Monetary Authority of Singapore).
+*   **Registered Company:** Governed by the Money Lenders Act.
 *   **Risk Assessment:** We employ a thorough SME loan evaluation and risk management process.
 *   **On-Chain Transparency:** All loan tokenization and transactions are visible and verifiable on the blockchain.
 
