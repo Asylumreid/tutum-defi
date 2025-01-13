@@ -10,8 +10,8 @@ import { motion } from 'framer-motion'
 
 const securityFeatures = [
   {
-    title: 'Regulated Operation',
-    description: 'Licensed and regulated under MAS (Monetary Authority of Singapore)',
+    title: 'Registered Company',
+    description: 'Governed by the money lenders act',
     icon: ShieldCheck,
   },
   {
